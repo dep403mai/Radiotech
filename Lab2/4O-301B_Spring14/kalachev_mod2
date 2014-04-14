@@ -1,0 +1,121 @@
+__author__ = 'igor'
+# -*- coding: UTF-8 -*-
+import pylab
+from numpy import *
+import random
+
+FDA = 20000.0               # —астота дискретизации аналогового несущего сигнала
+FDD = 50000.0               # —астота дискретизации цифрового исходного сигнала
+F = 50.0                    # —астота несущей
+N = 30                      # Љоличество передающихсЯ символов
+speed = 10.0                # ‘имвольнаЯ скорость (частота символов)
+duration = 1 / speed        # „лительность импульса
+time_signal = N * duration  # „лительность исходного сигнала из N импульсов
+M = 2                       # Љоличество уровней модулЯции
+T = 1 / F                   # „лительность импульса
+f = 2 * math.pi / N         # „ельта фи
+FFTL = 2 ** 17              # FFTL
+Wc = 2 * math.pi * F        # “гловаЯ частота несущей
+
+source_digital_sequence = [random.choice([-1, 1]) for x in range(0, N)]
+
+source_digital_signal1 = []
+for x in range(0, N):
+    source_digital_signal1 += [source_digital_sequence[x] for y in arange(0, duration, (1.0 / FDD))]
+
+# Ќе забыть про костыль длЯ избавлениЯ посещениЯ нулевого значениЯ косинусом: beg = 0.0
+
+MSK = []
+for x in xrange(0, N):
+    MSK += [cos(t * Wc + ((source_digital_sequence[x] * t * math.pi / (2 * T)))) for t in
+            arange(0, duration, (1.0 / FDA))] # if
+
+FM2 = []
+for x in xrange(0, N):
+    FM2 += [source_digital_sequence[x] * math.cos(Wc * t + 2 * M * f / 2) for t in arange(0, duration, (1.0 / FDA))]
+
+FM4 = []
+for x in xrange(0, N, 2):
+
+    if (source_digital_sequence[x] == 1) & (source_digital_sequence[x + 1] == 1):
+        FM4 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 1 / 4) for t in
+                arange(0, duration * 2, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == -1) & (source_digital_sequence[x + 1] == 1):
+        FM4 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 3 / 4) for t in
+                arange(0, duration * 2, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == -1) & (source_digital_sequence[x + 1] == -1):
+        FM4 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 5 / 4) for t in
+                arange(0, duration * 2, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == 1) & (source_digital_sequence[x + 1] == -1):
+        FM4 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 7 / 4) for t in
+                arange(0, duration * 2, (1.0 / FDA))]
+
+'''
+FM8 = []
+for x in xrange(0, N, 3):
+
+    if (source_digital_sequence[x] == 1) & (source_digital_sequence[x + 1] == 1) & (
+            source_digital_sequence[x + 2] == 1):
+        FM8 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 15 / 8) for t in
+                arange(0, duration * 3, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == 1) & (source_digital_sequence[x + 1] == 1) & (
+            source_digital_sequence[x + 2] == -1):
+        FM8 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 13 / 8) for t in
+                arange(0, duration * 3, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == 1) & (source_digital_sequence[x + 1] == -1) & (
+            source_digital_sequence[x + 2] == 1):
+        FM8 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 11 / 8) for t in
+                arange(0, duration * 3, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == 1) & (source_digital_sequence[x + 1] == -1) & (
+            source_digital_sequence[x + 2] == -1):
+        FM8 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 9 / 8) for t in
+                arange(0, duration * 3, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == -1) & (source_digital_sequence[x + 1] == 1) & (
+            source_digital_sequence[x + 2] == 1):
+        FM8 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 7 / 8) for t in
+                arange(0, duration * 3, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == -1) & (source_digital_sequence[x + 1] == 1) & (
+            source_digital_sequence[x + 2] == -1):
+        FM8 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 5 / 8) for t in
+                arange(0, duration * 3, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == -1) & (source_digital_sequence[x + 1] == -1) & (
+            source_digital_sequence[x + 2] == 1):
+        FM8 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 3 / 8) for t in
+                arange(0, duration * 3, (1.0 / FDA))]
+    elif (source_digital_sequence[x] == -1) & (source_digital_sequence[x + 1] == -1) & (
+            source_digital_sequence[x + 2] == -1):
+        FM8 += [source_digital_sequence[x] * math.cos(Wc * t + math.pi * 1 / 8) for t in
+                arange(0, duration * 3, (1.0 / FDA))]
+'''
+FFT_MSK = fft.rfft(MSK, FFTL)
+FFT_FM2 = fft.rfft(FM2, FFTL)
+FFT_FM4 = fft.rfft(FM4, FFTL)
+#FFT_FM8 = fft.rfft(FM8, FFTL)
+
+def plot_signal(x, y, title, labelx, labely, position):
+    print "x = "
+    print len(x)
+    print "y = "
+    print len(y)
+    pylab.subplot(17, 1, position)
+    pylab.plot(x, y)
+    pylab.title(title)
+    pylab.xlabel(labelx)
+    pylab.ylabel(labely)
+    pylab.grid(True)
+
+plot_signal(arange(0, time_signal, (1.0 / FDD)), source_digital_signal1, 'Digital sequence', 'time', '', 1)
+plot_signal(arange(0, time_signal, (1.0 / FDA)), MSK, 'MSK', 'time', '', 3)
+plot_signal(arange(0, time_signal, (1.0 / FDA)), FM2, 'FM2', 'time', '', 5)
+plot_signal(arange(0, time_signal, (1.0 / FDA)), FM4, 'FM4', 'time', '', 7)
+#plot_signal(arange(0, time_signal, (1.0 / FDA)), FM8, 'FM8', 'time', '', 9)
+plot_signal(arange(0, ((FDA / 2) + (FDA / FFTL)), (FDA / FFTL)), abs(FFT_MSK) / len(arange(0, t / 3, (1.0 / FDA))),
+            'Spectrum of MSK', 'Frequency (Hz)', 'Amplitude', 11)
+plot_signal(arange(0, ((FDA / 2) + (FDA / FFTL)), (FDA / FFTL)), abs(FFT_FM2) / len(arange(0, t / 3, (1.0 / FDA))),
+            'Spectrum of FM2', 'Frequency (Hz)', 'Amplitude', 13)
+plot_signal(arange(0, ((FDA / 2) + (FDA / FFTL)), (FDA / FFTL)), abs(FFT_FM4) / len(arange(0, t / 3, (1.0 / FDA))),
+            'Spectrum of FM4', 'Frequency (Hz)', 'Amplitude', 15)
+#plot_signal(arange(0, ((FDA / 2) + (FDA / FFTL)), (FDA / FFTL)), abs(FFT_FM8) / len(arange(0, t / 3, (1.0 / FDA))),
+#            'Spectrum of FM8', 'Frequency (Hz)', 'Amplitude', 17)
+
+pylab.show()
