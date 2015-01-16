@@ -1,0 +1,61 @@
+# -*- coding: UTF-8 -*-
+import pylab   # For graphics
+import math    # For sin(),  cos()
+from numpy import    # For function arange()
+
+# input data
+
+Tm = 4.0    # signal duration
+Fd = 6000.0    # sampling frequency
+FFTL = 8192    # spectrum lines quantity
+F1 = 250.0     # fundamental component
+F3 = 350.0    # quadratic component
+F2 = 2000.0    # carrier frequency
+A = 1    # original signal amplitude
+A1 = 5    # carrier signal amplitude
+
+w = 2*math.pi*F1    # original signal circular frequency
+w2 = 2*math.pi*F3    # original signal circular frequency
+w1 = 2*math.pi*F2    # carrier signal circular frequency
+
+# forming a list of signal values 
+
+# Forming a list of original signal with duration Tm and 1/Fd interval 
+S = [A*math.sin(w*x)+A*math.sin(w2*x) for x in arange(0, Tm, (1.0/Fd))]
+
+# Forming a list of carrier signal with duration Tm and 1/Fd interval 
+M = [A1*math.sin(w1*x) for x in arange(0, Tm, (1.0/Fd))]
+
+
+# model
+AM = [A1*((math.sin((w1-w)*x))+(math.sin((w1-w2)*x))) for x in arange(0, Tm, (1.0/Fd))]
+
+# fast Fourier transformation
+# FFT executing for a list of original signal, carrier signal and modulation amplitude
+FFT_AM = fft.rfft(AM, FFTL)
+FFT_S = fft.rfft(S, FFTL)
+FFT_M = fft.rfft(M, FFTL)
+
+# defining functions of graph plotting
+
+
+def plot_signal(x, y, title, labelx, labley, position):
+    pylab.subplot(9,  1,  position)
+    pylab.plot(x, y)
+    pylab.title(title)
+    pylab.xlabel(labelx)
+    pylab.ylabel(labley)
+    pylab.grid(True)
+# original signal construction
+plot_signal(arange(0, (3/F1), (1.0/Fd)), S[0:(int(3*Fd/F1))], 'Source signal', 'Time (s)', 'Amplitude', 1)
+# original signal spectrum construction
+plot_signal(arange(0, ((Fd/2)+(Fd/FFTL)), (Fd/FFTL)), abs(FFT_S)/len(arange(0, Tm/3, (1.0/Fd))), 'Spectrum of source signal', 'Frequency (Hz)', 'Amplitude', 3)
+# Amplitude-modulating signal construction
+plot_signal(arange(0, (10/F1), (1.0/Fd)), AM[0:(int(10*Fd/F1))], 'SSB modulation', 'Time (s)', 'Amplitude', 5)
+# carrier signal spectrum construction
+plot_signal(arange(0, ((Fd/2)+(Fd/FFTL)), (Fd/FFTL)), abs(FFT_M)/len(arange(0, Tm/3, (1.0/Fd))), 'Spectrum of carrier signal', 'Frequency (Hz)', 'Amplitude', 7)
+# Amplitude-modulating spectrum signal construction
+plot_signal(arange(0, ((Fd/2)+(Fd/FFTL)), (Fd/FFTL)), abs(FFT_AM)/len(arange(0, Tm/3, (1.0/Fd))), 'Spectrum of SSB signal', 'Frequency (Hz)', 'Amplitude', 9)
+
+# graphs display
+pylab.show()
